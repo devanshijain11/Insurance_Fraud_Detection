@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Performance — Fraud Detect{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="position: relative; z-index: 1;">
+
+    <div style="margin-bottom: 32px; animation: fadeUp 0.4s ease both;">
+        <div class="page-title">Prediction Result</div>
+        <div class="page-subtitle" style="margin-top: 4px;">Analysis complete · Random Forest Classifier</div>
+    </div>
+
+    <!-- Main Result Card -->
+    {% set is_fraud = 'Fraud Detected' in result %}
+    <div class="card" style="
+        margin-bottom: 24px;
+        border-color: {% if is_fraud %}rgba(255,61,113,0.4){% else %}rgba(168,255,120,0.3){% endif %};
+        background: {% if is_fraud %}rgba(255,61,113,0.06){% else %}rgba(168,255,120,0.05){% endif %};
+        animation: fadeUp 0.4s 0.1s ease both; opacity: 0; animation-fill-mode: both;
+        position: relative; overflow: hidden;
+    ">
+        <!-- Background glow -->
+        <div style="position: absolute; top: -40px; right: -40px; width: 200px; height: 200px; border-radius: 50%; background: {% if is_fraud %}rgba(255,61,113,0.08){% else %}rgba(168,255,120,0.06){% endif %};"></div>
+
+        <div style="display: flex; align-items: center; gap: 24px;">
+            <div style="font-size: 64px; line-height: 1; opacity: 0.9;">
+                {% if is_fraud %}⚠{% else %}✓{% endif %}
+            </div>
+            <div style="flex: 1;">
+                <div style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px;">Classification Result</div>
+                <div style="font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; color: {% if is_fraud %}var(--accent2){% else %}var(--accent3){% endif %};">
+                    {{ result }}
+                </div>
+                <div style="margin-top: 12px;">
+                    <span class="stat-badge {% if is_fraud %}bad{% else %}good{% endif %}">
+                        {% if is_fraud %}● HIGH FRAUD RISK{% else %}● CLAIM APPEARS SAFE{% endif %}
+                    </span>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 4px; letter-spacing: 0.1em; text-transform: uppercase;">Model Used</div>
+                <div style="font-family: 'Syne', sans-serif; font-size: 13px; color: var(--accent);">Random Forest</div>
+                <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px;">GridSearchCV Optimized</div>
+                <div style="font-size: 11px; color: var(--text-dim);">SMOTE Balanced</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; animation: fadeUp 0.4s 0.2s ease both; opacity: 0; animation-fill-mode: both;">
+        {% for label, val, color in [
+            ('Accuracy', accuracy, '#00e5ff'),
+            ('Precision', precision, '#a8ff78'),
+            ('Recall', recall, '#ffaa00'),
+            ('F1 Score', f1, '#ff3d71')
+        ] %}
+        <div class="card" style="padding: 20px; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, {{ color }}, transparent);"></div>
+            <div style="font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;">{{ label }}</div>
+            <div style="font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: {{ color }};">
+                {{ val }}<span style="font-size: 14px;">%</span>
+            </div>
+            <!-- Mini bar -->
+            <div style="margin-top: 10px; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;">
+                <div style="height: 100%; width: {{ val }}%; background: {{ color }}; border-radius: 2px; transition: width 1s ease;"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Sentiment Analysis Result -->
+    {% if sentiment %}
+    <div class="card" style="margin-bottom: 24px; animation: fadeUp 0.4s 0.25s ease both; opacity: 0; animation-fill-mode: both;
+        border-color: {% if sentiment.risk_flag %}rgba(255,61,113,0.3){% else %}rgba(0,229,255,0.15){% endif %};">
+        <div class="card-header">Sentiment Analysis — Customer Statement</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <div>
+                <div style="font-size: 10px; color: var(--text-dim); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px;">Sentiment</div>
+                <div style="font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px;
+                    color: {% if sentiment.label == 'Positive' %}var(--accent3){% elif sentiment.label == 'Negative' %}var(--accent2){% else %}var(--accent){% endif %};">
+                    {{ sentiment.label }}
+                </div>
+            </div>
+            <div>
+                <div style="font-size: 10px; color: var(--text-dim); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px;">Polarity</div>
+                <div style="font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; color: var(--text);">{{ sentiment.polarity }}</div>
+                <div style="font-size: 10px; color: var(--text-dim);">−1.0 (neg) → +1.0 (pos)</div>
+            </div>
+            <div>
+                <div style="font-size: 10px; color: var(--text-dim); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px;">Subjectivity</div>
+                <div style="font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; color: var(--text);">{{ sentiment.subjectivity }}</div>
+                <div style="font-size: 10px; color: var(--text-dim);">0.0 (fact) → 1.0 (opinion)</div>
+            </div>
+            <div>
+                <div style="font-size: 10px; color: var(--text-dim); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px;">Risk Flag</div>
+                {% if sentiment.risk_flag %}
+                <span class="stat-badge bad">⚠ SUSPICIOUS</span>
+                {% else %}
+                <span class="stat-badge good">✓ CLEAR</span>
+                {% endif %}
+            </div>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,229,255,0.04); border-radius: 6px; border: 1px solid var(--border); font-size: 12px; color: var(--text-dim);">
+            {{ sentiment.detail }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div style="display: flex; gap: 12px; animation: fadeUp 0.4s 0.3s ease both; opacity: 0; animation-fill-mode: both;">
+        <a href="/predict_page" class="btn btn-primary">← New Prediction</a>
+        <a href="/dashboard" class="btn btn-outline">⊞ Dashboard</a>
+    </div>
+</div>
+
+<style>
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+{% endblock %}

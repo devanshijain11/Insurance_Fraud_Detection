@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}Predict Fraud — Fraud Detect{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="position: relative; z-index: 1;">
+
+    <div style="margin-bottom: 32px; animation: fadeUp 0.4s ease both;">
+        <div class="page-title">Fraud Prediction</div>
+        <div class="page-subtitle" style="margin-top: 4px;">Enter claim details · AI-powered analysis · Instant results</div>
+    </div>
+
+    <form method="POST" action="/predict">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+
+        <!-- LEFT: Claim Details -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="card" style="animation: fadeUp 0.4s 0.1s ease both; opacity: 0; animation-fill-mode: both;">
+                <div class="card-header">Policyholder Info</div>
+
+                <div class="form-group">
+                    <label class="form-label">Age</label>
+                    <input type="number" name="Age" class="form-control" placeholder="e.g. 35" min="16" max="100" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Fault</label>
+                    <select name="Fault" class="form-control">
+                        <option>Policy Holder</option>
+                        <option>Third Party</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Driver Rating</label>
+                    <input type="number" name="DriverRating" class="form-control" placeholder="1 – 4" min="1" max="4" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Past Number of Claims</label>
+                    <select name="PastNumberOfClaims" class="form-control">
+                        <option>none</option>
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>more than 3</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card" style="animation: fadeUp 0.4s 0.2s ease both; opacity: 0; animation-fill-mode: both;">
+                <div class="card-header">Vehicle & Policy</div>
+
+                <div class="form-group">
+                    <label class="form-label">Policy Type</label>
+                    <select name="PolicyType" class="form-control">
+                        <option>Sedan - Collision</option>
+                        <option>Sedan - All Perils</option>
+                        <option>Sedan - Liability</option>
+                        <option>Sport - Collision</option>
+                        <option>Sport - All Perils</option>
+                        <option>Sport - Liability</option>
+                        <option>Utility - Collision</option>
+                        <option>Utility - All Perils</option>
+                        <option>Utility - Liability</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Vehicle Category</label>
+                    <select name="VehicleCategory" class="form-control">
+                        <option>Sedan</option>
+                        <option>Sport</option>
+                        <option>Utility</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Vehicle Price Range</label>
+                    <select name="VehiclePrice" class="form-control">
+                        <option>less than 20000</option>
+                        <option>20000 to 29000</option>
+                        <option>30000 to 39000</option>
+                        <option>40000 to 59000</option>
+                        <option>60000 to 69000</option>
+                        <option>more than 69000</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Deductible ($)</label>
+                    <input type="number" name="Deductible" class="form-control" placeholder="e.g. 400" required>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Sentiment + Submit -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="card" style="animation: fadeUp 0.4s 0.15s ease both; opacity: 0; animation-fill-mode: both;">
+                <div class="card-header">Customer Statement</div>
+                <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.6;">
+                    Ask the claimant to describe the incident in their own words. The AI will perform sentiment analysis and incorporate it into the fraud prediction.
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Incident Statement</label>
+                    <textarea name="customer_statement" class="form-control" rows="7" placeholder="e.g. My car was parked outside the mall when I returned and found the rear bumper completely smashed. There were no witnesses and I had no dashcam. I immediately called the police..." style="resize: vertical; line-height: 1.6;" oninput="analyzeSentiment(this.value)"></textarea>
+                </div>
+
+                <!-- Live Sentiment Indicator -->
+                <div id="sentiment-box" style="padding: 14px; background: rgba(0,229,255,0.04); border: 1px solid var(--border); border-radius: 8px; display: none;">
+                    <div style="font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px;">Sentiment Analysis</div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div id="sentiment-icon" style="font-size: 24px;"></div>
+                        <div>
+                            <div id="sentiment-label" style="font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px;"></div>
+                            <div id="sentiment-detail" style="font-size: 11px; color: var(--text-dim); margin-top: 2px;"></div>
+                        </div>
+                        <div style="margin-left: auto;">
+                            <div id="sentiment-score" style="font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px;"></div>
+                            <div style="font-size: 10px; color: var(--text-dim);">confidence</div>
+                        </div>
+                    </div>
+                    <!-- Signal bars -->
+                    <div style="margin-top: 12px; display: flex; gap: 3px; align-items: flex-end; height: 24px;" id="signal-bars"></div>
+                </div>
+            </div>
+
+            <!-- Risk Summary Card -->
+            <div class="card" style="animation: fadeUp 0.4s 0.25s ease both; opacity: 0; animation-fill-mode: both;">
+                <div class="card-header">Risk Signals</div>
+                <div id="risk-signals" style="display: flex; flex-wrap: wrap; gap: 8px; min-height: 40px;">
+                    <div style="font-size: 11px; color: var(--text-dim);">Fill in the form to see risk signals...</div>
+                </div>
+            </div>
+
+            <div class="card" style="animation: fadeUp 0.4s 0.3s ease both; opacity: 0; animation-fill-mode: both; background: rgba(255,61,113,0.04); border-color: rgba(255,61,113,0.2);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                    <div>
+                        <div style="font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px;">Run Analysis</div>
+                        <div style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">Random Forest + Sentiment AI</div>
+                    </div>
+                    <div style="font-size: 28px; opacity: 0.3;">◎</div>
+                </div>
+                <button type="submit" class="btn btn-danger" style="width: 100%; justify-content: center; padding: 14px; font-size: 13px; letter-spacing: 0.15em;">
+                    ⚡ PREDICT FRAUD
+                </button>
+                <div style="font-size: 10px; color: var(--text-dim); text-align: center; margin-top: 10px;">
+                    Results will include fraud probability score
+                </div>
+            </div>
+        </div>
+
+    </div>
+    </form>
+</div>
+
+<style>
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+function analyzeSentiment(text) {
+    const box = document.getElementById('sentiment-box');
+    if (text.length < 20) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+
+    const words = text.toLowerCase();
+
+    // Simple keyword-based heuristic (real backend would use NLP)
+    const negKeywords = ['damaged','broken','crashed','smashed','stolen','missing','hit','accident','fraud','lie','fake','never','worst','terrible'];
+    const posKeywords = ['honest','truthful','immediately','police','witness','safe','okay','minor','small'];
+    const suspiciousKeywords = ['no witness','no dashcam','no camera','no proof','dont remember','not sure','lost','forgot','alone'];
+
+    let neg = negKeywords.filter(w => words.includes(w)).length;
+    let pos = posKeywords.filter(w => words.includes(w)).length;
+    let susp = suspiciousKeywords.filter(w => words.includes(w)).length;
+
+    let label, icon, detail, color, score;
+
+    if (susp >= 2 || neg >= 4) {
+        label = 'High Risk'; icon = '⚠'; detail = 'Multiple suspicious indicators detected';
+        color = '#ff3d71'; score = Math.min(95, 70 + susp * 8 + neg * 3) + '%';
+    } else if (susp === 1 || neg >= 2) {
+        label = 'Moderate Risk'; icon = '◈'; detail = 'Some inconsistencies noted';
+        color = '#ffaa00'; score = Math.min(70, 40 + susp * 10 + neg * 5) + '%';
+    } else {
+        label = 'Low Risk'; icon = '✓'; detail = 'Statement appears consistent';
+        color = '#a8ff78'; score = Math.max(15, 30 - pos * 5) + '%';
+    }
+
+    document.getElementById('sentiment-label').textContent = label;
+    document.getElementById('sentiment-label').style.color = color;
+    document.getElementById('sentiment-icon').textContent = icon;
+    document.getElementById('sentiment-detail').textContent = detail;
+    document.getElementById('sentiment-score').textContent = score;
+    document.getElementById('sentiment-score').style.color = color;
+
+    // Signal bars
+    const bars = document.getElementById('signal-bars');
+    const numBars = 12;
+    bars.innerHTML = '';
+    for (let i = 0; i < numBars; i++) {
+        const h = 4 + Math.random() * 20;
+        const active = i < Math.round(parseInt(score) / 100 * numBars);
+        bars.innerHTML += `<div style="width: 8px; height: ${h}px; border-radius: 2px; background: ${active ? color : 'rgba(255,255,255,0.08)'}; transition: all 0.3s; animation-delay: ${i * 0.05}s;"></div>`;
+    }
+
+    // Update risk signals
+    const signals = document.getElementById('risk-signals');
+    signals.innerHTML = '';
+    if (susp > 0) signals.innerHTML += `<span class="stat-badge bad">No Witnesses</span>`;
+    if (neg > 3) signals.innerHTML += `<span class="stat-badge bad">High Damage Claims</span>`;
+    if (pos > 1) signals.innerHTML += `<span class="stat-badge good">Police Reported</span>`;
+    if (signals.innerHTML === '') signals.innerHTML += `<span class="stat-badge info">Statement Analyzed</span>`;
+}
+</script>
+{% endblock %}

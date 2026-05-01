@@ -1,0 +1,28 @@
+1. FRAUD TEST CASE
+
+Use:
+
+Field	Value
+Age	0
+Fault	Policy Holder
+PolicyType	Sedan - all perils
+VehicleCategory	Sedan
+VehiclePrice	more than 69000
+Deductible	400
+DriverRating	1
+PastNumberOfClaims	2 to 4
+
+
+2. SAFE CLAIM TEST CASE
+
+Use:
+
+Field	Value
+Age	45
+Fault	Third Party
+PolicyType	Sedan - Liability
+VehicleCategory	Utility
+VehiclePrice	20000 to 29000
+Deductible	1000
+DriverRating	1
+PastNumberOfClaims	none

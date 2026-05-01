@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Login — Fraud Detect{% endblock %}
+
+{% block content %}
+<div style="min-height: calc(100vh - 64px); display: flex; align-items: center; justify-content: center; position: relative; z-index: 1;">
+
+    <!-- Decorative orb -->
+    <div style="position: fixed; top: 20%; left: 50%; transform: translateX(-50%); width: 400px; height: 400px; background: radial-gradient(circle, rgba(0,229,255,0.06) 0%, transparent 70%); pointer-events: none; border-radius: 50%;"></div>
+
+    <div style="width: 100%; max-width: 400px; padding: 0 20px; animation: fadeUp 0.5s ease both;">
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 32px;">
+            <div style="font-size: 36px; color: var(--accent); margin-bottom: 12px; animation: pulse 2s ease-in-out infinite;">◈</div>
+            <div class="page-title" style="font-size: 26px;">Welcome back</div>
+            <div class="page-subtitle" style="margin-top: 6px;">Sign in to access the detection system</div>
+        </div>
+
+        <div class="card">
+            {% if error %}
+            <div class="alert alert-error">⚠ {{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="/login">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" class="form-control" placeholder="Enter username" autocomplete="off" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 28px;">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 13px;">
+                    <span>→</span> Sign In
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 20px; font-size: 12px; color: var(--text-dim);">
+                No account? <a href="/signup" style="color: var(--accent); text-decoration: none;">Create one</a>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px; font-size: 10px; color: rgba(122,155,181,0.4); letter-spacing: 0.1em;">
+            SECURED · ENCRYPTED · MONITORED
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+{% endblock %}

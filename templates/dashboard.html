@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Fraud Detect{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="position: relative; z-index: 1;">
+
+    <!-- Header -->
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 36px; animation: fadeUp 0.4s ease both;">
+        <div>
+            <div class="page-title">Fraud Dashboard</div>
+            <div class="page-subtitle" style="margin-top: 4px;">Real-time insurance claim analysis</div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px;">
+            <span class="stat-badge info">● LIVE</span>
+            <span style="font-size: 11px; color: var(--text-dim);" id="clock"></span>
+        </div>
+    </div>
+
+    <!-- Metric Cards Row -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; animation: fadeUp 0.4s 0.1s ease both; opacity: 0; animation-fill-mode: both;">
+        <div class="card" style="padding: 20px; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), transparent);"></div>
+            <div style="font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;">Accuracy</div>
+            <div style="font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--accent);">{{ accuracy }}<span style="font-size: 16px;">%</span></div>
+            <div style="font-size: 10px; color: rgba(168,255,120,0.7); margin-top: 4px;">↑ Model Performance</div>
+        </div>
+        <div class="card" style="padding: 20px; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #a8ff78, transparent);"></div>
+            <div style="font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;">Precision</div>
+            <div style="font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--accent3);">{{ precision }}<span style="font-size: 16px;">%</span></div>
+            <div style="font-size: 10px; color: rgba(168,255,120,0.7); margin-top: 4px;">Fraud Detection Rate</div>
+        </div>
+        <div class="card" style="padding: 20px; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #ffaa00, transparent);"></div>
+            <div style="font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;">Recall</div>
+            <div style="font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: #ffaa00;">{{ recall }}<span style="font-size: 16px;">%</span></div>
+            <div style="font-size: 10px; color: rgba(255,170,0,0.7); margin-top: 4px;">True Positive Rate</div>
+        </div>
+        <div class="card" style="padding: 20px; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent2), transparent);"></div>
+            <div style="font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;">F1 Score</div>
+            <div style="font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--accent2);">{{ f1 }}<span style="font-size: 16px;">%</span></div>
+            <div style="font-size: 10px; color: rgba(255,61,113,0.7); margin-top: 4px;">Harmonic Mean</div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div style="display: grid; grid-template-columns: 300px 1fr 1fr; gap: 20px; animation: fadeUp 0.4s 0.2s ease both; opacity: 0; animation-fill-mode: both;">
+
+        <!-- Pie Chart -->
+        <div class="card">
+            <div class="card-header">Claim Distribution</div>
+            <canvas id="pieChart" height="220"></canvas>
+            <div style="display: flex; gap: 16px; justify-content: center; margin-top: 16px;">
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-dim);">
+                    <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--accent);"></div> Non-Fraud
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-dim);">
+                    <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--accent2);"></div> Fraud
+                </div>
+            </div>
+        </div>
+
+        <!-- Bar Chart -->
+        <div class="card">
+            <div class="card-header">Vehicle Fraud Cases</div>
+            <canvas id="barChart" height="220"></canvas>
+        </div>
+
+        <!-- Line Chart -->
+        <div class="card">
+            <div class="card-header">Age vs Fraud Frequency</div>
+            <canvas id="lineChart" height="220"></canvas>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div style="display: flex; gap: 12px; margin-top: 24px; animation: fadeUp 0.4s 0.3s ease both; opacity: 0; animation-fill-mode: both;">
+        <a href="/predict_page" class="btn btn-primary">→ Run Prediction</a>
+        <a href="/upload" class="btn btn-outline">↑ Upload Dataset</a>
+        <a href="/performance" class="btn btn-outline">◎ View Performance</a>
+    </div>
+
+</div>
+
+<style>
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const fraudData = {{ fraud_counts | safe }};
+
+// Convert keys safely
+const nonFraud = fraudData[0] || fraudData["0"] || 0;
+const fraud = fraudData[1] || fraudData["1"] || 0;
+
+// ================= PIE =================
+new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Non-Fraud', 'Fraud'],
+        datasets: [{
+            data: [nonFraud, fraud],
+            backgroundColor: ['#00e5ff', '#ff3d71']
+        }]
+    }
+});
+
+// ================= BAR =================
+new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Sedan', 'Sport', 'Utility'],
+        datasets: [{
+            label: 'Fraud Cases',
+            data: [820, 140, 90]
+        }]
+    }
+});
+
+// ================= LINE =================
+new Chart(document.getElementById('lineChart'), {
+    type: 'line',
+    data: {
+        labels: ['<20','21','25','30','35','40','45','50','55','60','>65'],
+        datasets: [{
+            label: 'Fraud',
+            data: [30,4,8,6,5,12,13,32,38,42,28]
+        }]
+    }
+});
+</script>
+<script>
+// Clock
+function updateClock() {
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+const fraudData = {{ fraud_counts | safe }};
+const chartDefaults = {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+        x: { grid: { color: 'rgba(0,229,255,0.05)' }, ticks: { color: '#7a9bb5', font: { family: 'DM Mono', size: 10 } } },
+        y: { grid: { color: 'rgba(0,229,255,0.05)' }, ticks: { color: '#7a9bb5', font: { family: 'DM Mono', size: 10 } } }
+    }
+};
+
+// Pie
+new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Non-Fraud', 'Fraud'],
+        datasets: [{ data: [fraudData[0] || 0, fraudData[1] || 0], backgroundColor: ['rgba(0,229,255,0.7)', 'rgba(255,61,113,0.7)'], borderColor: ['#00e5ff', '#ff3d71'], borderWidth: 2, hoverOffset: 8 }]
+    },
+    options: { responsive: true, cutout: '65%', plugins: { legend: { display: false } } }
+});
+
+// Bar
+new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Sedan', 'Sport', 'Utility'],
+        datasets: [{ label: 'Fraud Cases', data: [820, 140, 90], backgroundColor: ['rgba(0,229,255,0.6)', 'rgba(0,229,255,0.4)', 'rgba(0,229,255,0.25)'], borderColor: ['#00e5ff', '#00e5ff', '#00e5ff'], borderWidth: 1 }]
+    },
+    options: { ...chartDefaults, plugins: { legend: { display: false } } }
+});
+
+// Line
+new Chart(document.getElementById('lineChart'), {
+    type: 'line',
+    data: {
+        labels: ['<20','21','25','30','35','40','45','50','55','60','>65'],
+        datasets: [{ label: 'Fraud', data: [30,4,8,6,5,12,13,32,38,42,28], borderColor: '#00e5ff', backgroundColor: 'rgba(0,229,255,0.08)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#00e5ff', tension: 0.4, fill: true }]
+    },
+    options: { ...chartDefaults, plugins: { legend: { display: false } } }
+});
+</script>
+{% endblock %}

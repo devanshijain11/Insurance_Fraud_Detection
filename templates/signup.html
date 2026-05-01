@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Signup — Fraud Detect{% endblock %}
+
+{% block content %}
+<div style="min-height: calc(100vh - 64px); display: flex; align-items: center; justify-content: center; position: relative; z-index: 1; padding: 40px 20px;">
+
+    <div style="position: fixed; top: 30%; right: 20%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,61,113,0.05) 0%, transparent 70%); pointer-events: none; border-radius: 50%;"></div>
+
+    <div style="width: 100%; max-width: 420px; animation: fadeUp 0.5s ease both;">
+        <div style="text-align: center; margin-bottom: 32px;">
+            <div style="font-size: 36px; color: var(--accent2); margin-bottom: 12px;">◇</div>
+            <div class="page-title" style="font-size: 26px;">Create account</div>
+            <div class="page-subtitle" style="margin-top: 6px;">Join the fraud detection network</div>
+        </div>
+
+        <div class="card">
+            {% if error %}
+            <div class="alert alert-error">⚠ {{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="/signup">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" class="form-control" placeholder="Choose a username" autocomplete="off" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="Create a strong password" id="pwd" required oninput="checkStrength(this.value)">
+                </div>
+                <div class="form-group" style="margin-bottom: 8px;">
+                    <label class="form-label">Confirm Password</label>
+                    <input type="password" class="form-control" placeholder="Repeat password">
+                </div>
+
+                <!-- Password strength indicator -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; gap: 4px; margin-bottom: 6px;">
+                        <div id="s1" style="height: 3px; flex: 1; border-radius: 2px; background: rgba(255,255,255,0.1); transition: background 0.3s;"></div>
+                        <div id="s2" style="height: 3px; flex: 1; border-radius: 2px; background: rgba(255,255,255,0.1); transition: background 0.3s;"></div>
+                        <div id="s3" style="height: 3px; flex: 1; border-radius: 2px; background: rgba(255,255,255,0.1); transition: background 0.3s;"></div>
+                        <div id="s4" style="height: 3px; flex: 1; border-radius: 2px; background: rgba(255,255,255,0.1); transition: background 0.3s;"></div>
+                    </div>
+                    <div style="font-size: 10px; color: var(--text-dim); letter-spacing: 0.08em;">
+                        Must include: uppercase, lowercase, number, special char (@$!%*?&), min 8 chars
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 13px;">
+                    <span>+</span> Create Account
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 20px; font-size: 12px; color: var(--text-dim);">
+                Already have an account? <a href="/login" style="color: var(--accent); text-decoration: none;">Sign in</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+function checkStrength(val) {
+    const bars = ['s1','s2','s3','s4'];
+    const checks = [/.{8,}/, /[A-Z]/, /[0-9]/, /[@$!%*?&]/];
+    let score = checks.filter(r => r.test(val)).length;
+    const colors = ['#ff3d71','#ffaa00','#00e5ff','#a8ff78'];
+    bars.forEach((id, i) => {
+        document.getElementById(id).style.background = i < score ? colors[score-1] : 'rgba(255,255,255,0.1)';
+    });
+}
+</script>
+{% endblock %}

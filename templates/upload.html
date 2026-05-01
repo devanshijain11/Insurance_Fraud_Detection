@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Upload Dataset — Fraud Detect{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="position: relative; z-index: 1; max-width: 700px;">
+
+    <div style="margin-bottom: 32px; animation: fadeUp 0.4s ease both;">
+        <div class="page-title">Upload Dataset</div>
+        <div class="page-subtitle" style="margin-top: 4px;">Upload a CSV · Retrain the model · Update predictions</div>
+    </div>
+
+    <div class="card" style="animation: fadeUp 0.4s 0.1s ease both; opacity: 0; animation-fill-mode: both;">
+        <div class="card-header">Dataset Upload</div>
+
+        <form method="POST" action="/upload" enctype="multipart/form-data">
+            <!-- Drop zone -->
+            <div id="dropzone" style="
+                border: 2px dashed var(--border);
+                border-radius: 10px;
+                padding: 48px 32px;
+                text-align: center;
+                margin-bottom: 20px;
+                cursor: pointer;
+                transition: all 0.3s;
+                background: rgba(0,229,255,0.02);
+                position: relative;
+            " onclick="document.getElementById('file-input').click()"
+               ondragover="event.preventDefault(); this.style.borderColor='var(--accent)'; this.style.background='rgba(0,229,255,0.06)'"
+               ondragleave="this.style.borderColor='var(--border)'; this.style.background='rgba(0,229,255,0.02)'"
+               ondrop="handleDrop(event)">
+
+                <div style="font-size: 40px; margin-bottom: 12px; opacity: 0.5;">↑</div>
+                <div style="font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 6px;" id="drop-label">Drop your CSV here</div>
+                <div style="font-size: 11px; color: var(--text-dim);">or click to browse · CSV format required</div>
+
+                <input type="file" name="file" id="file-input" accept=".csv" style="display:none" onchange="fileSelected(this)">
+            </div>
+
+            <!-- Selected file display -->
+            <div id="file-info" style="display: none; padding: 12px 16px; background: rgba(168,255,120,0.06); border: 1px solid rgba(168,255,120,0.2); border-radius: 6px; margin-bottom: 20px; display: none; align-items: center; gap: 10px;">
+                <span style="color: var(--accent3); font-size: 18px;">✓</span>
+                <div>
+                    <div id="file-name" style="font-size: 13px; color: var(--accent3);"></div>
+                    <div id="file-size" style="font-size: 10px; color: var(--text-dim);"></div>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button type="submit" class="btn" style="background: #ffaa00; color: var(--bg-deep); font-weight: 600;">
+                    ⚙ Upload & Train Model
+                </button>
+                <div style="font-size: 11px; color: var(--text-dim);">Training may take 1-2 minutes</div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Format guide -->
+    <div class="card" style="margin-top: 20px; animation: fadeUp 0.4s 0.2s ease both; opacity: 0; animation-fill-mode: both;">
+        <div class="card-header">Required Columns</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            {% for col in ['Age', 'Fault', 'PolicyType', 'VehicleCategory', 'VehiclePrice', 'Deductible', 'DriverRating', 'PastNumberOfClaims', 'FraudFound_P'] %}
+            <span class="stat-badge info">{{ col }}</span>
+            {% endfor %}
+        </div>
+        <div style="font-size: 11px; color: var(--text-dim); margin-top: 16px; line-height: 1.6;">
+            The model will be retrained using GridSearchCV with SMOTE oversampling. Results are reflected immediately on the dashboard.
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+function fileSelected(input) {
+    if (input.files && input.files[0]) {
+        const f = input.files[0];
+        document.getElementById('drop-label').textContent = f.name;
+        document.getElementById('file-name').textContent = f.name;
+        document.getElementById('file-size').textContent = (f.size / 1024).toFixed(1) + ' KB';
+        const info = document.getElementById('file-info');
+        info.style.display = 'flex';
+    }
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    const dt = e.dataTransfer;
+    const input = document.getElementById('file-input');
+    input.files = dt.files;
+    fileSelected(input);
+    document.getElementById('dropzone').style.borderColor = 'var(--border)';
+    document.getElementById('dropzone').style.background = 'rgba(0,229,255,0.02)';
+}
+</script>
+{% endblock %}

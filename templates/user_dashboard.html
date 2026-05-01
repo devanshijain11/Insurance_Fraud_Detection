@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>User Dashboard</h2>
+
+<table border="1">
+<tr><th>Your Predictions</th></tr>
+
+{% for p in data %}
+<tr><td>{{ p[0] }}</td></tr>
+{% endfor %}
+
+</table>
+
+{% endblock %}
