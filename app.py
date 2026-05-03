@@ -7,7 +7,7 @@ import os
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.ensemble import RandomForestClassifier
 from imblearn.over_sampling import SMOTE
 from textblob import TextBlob
@@ -65,7 +65,12 @@ def analyze_sentiment(text):
 # ================= PREPROCESS =================
 def preprocess_data(dataframe):
     global label_encoders
+
     df_copy = dataframe.copy()
+
+    # Handle missing values
+    df_copy = df_copy.fillna("Unknown")
+
     label_encoders = {}
 
     for col in df_copy.columns:
@@ -81,10 +86,14 @@ def train_model():
     global model, scaler, model_columns
     global accuracy, precision_val, recall_val, f1_val
 
-    processed_df = preprocess_data(df)
+    df_clean = df.copy()
+    df_clean = df_clean.fillna("Unknown")
 
-    X = processed_df.drop(columns=[TARGET])
-    y = processed_df[TARGET]
+    y = df_clean[TARGET]
+    X = df_clean.drop(columns=[TARGET])
+
+    # Encode features only
+    X = preprocess_data(X)
 
     model_columns = X.columns.tolist()
 
@@ -92,8 +101,12 @@ def train_model():
         X, y, stratify=y, test_size=0.25, random_state=42
     )
 
-    smote = SMOTE(sampling_strategy=0.7)
-    X_train, y_train = smote.fit_resample(X_train, y_train)
+    # Apply SMOTE safely
+    try:
+        smote = SMOTE(sampling_strategy=0.7, random_state=42)
+        X_train, y_train = smote.fit_resample(X_train, y_train)
+    except Exception as e:
+        print("⚠️ SMOTE skipped:", e)
 
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
@@ -117,17 +130,17 @@ def train_model():
     recall_val = recall_score(y_test, preds, zero_division=0)
     f1_val = f1_score(y_test, preds, zero_division=0)
 
-    print("✅ Model trained")
+    print("✅ Model trained successfully")
 
 train_model()
 
 # ================= HELPERS =================
 def metrics():
     return dict(
-        accuracy=round(accuracy*100,2),
-        precision=round(precision_val*100,2),
-        recall=round(recall_val*100,2),
-        f1=round(f1_val*100,2)
+        accuracy=round(accuracy * 100, 2),
+        precision=round(precision_val * 100, 2),
+        recall=round(recall_val * 100, 2),
+        f1=round(f1_val * 100, 2)
     )
 
 def login_required(f):
@@ -201,6 +214,7 @@ def upload():
             return redirect('/dashboard')
 
     return render_template("upload.html")
+
 @app.route('/predict_page')
 @login_required
 def predict_page():
@@ -220,11 +234,14 @@ def predict():
 
         if col in label_encoders:
             try:
-                val = label_encoders[col].transform([val])[0]
+                val = label_encoders[col].transform([str(val)])[0]
             except:
                 val = label_encoders[col].transform([label_encoders[col].classes_[0]])[0]
         else:
-            val = float(val) if val else 0
+            try:
+                val = float(val)
+            except:
+                val = 0
 
         input_data[col] = val
 
@@ -264,4 +281,4 @@ def logout():
 
 # ================= RUN =================
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
