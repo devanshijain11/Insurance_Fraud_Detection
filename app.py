@@ -6,7 +6,7 @@ import json
 import os
 
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.ensemble import RandomForestClassifier
 from imblearn.over_sampling import SMOTE
@@ -21,7 +21,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 TARGET = "FraudFound_P"
 
 # Globals
-label_encoders = {}
 scaler = None
 model = None
 model_columns = []
@@ -62,56 +61,43 @@ def analyze_sentiment(text):
 
     return {"label": label, "risk_flag": risk_flag}
 
-# ================= PREPROCESS =================
-def preprocess_data(dataframe):
-    global label_encoders
-
-    df_copy = dataframe.copy()
-
-    # Handle missing values
-    df_copy = df_copy.fillna("Unknown")
-
-    label_encoders = {}
-
-    for col in df_copy.columns:
-        if df_copy[col].dtype == "object":
-            le = LabelEncoder()
-            df_copy[col] = le.fit_transform(df_copy[col].astype(str))
-            label_encoders[col] = le
-
-    return df_copy
-
 # ================= TRAIN =================
 def train_model():
     global model, scaler, model_columns
     global accuracy, precision_val, recall_val, f1_val
 
     df_clean = df.copy()
+
+    # Fill missing values
     df_clean = df_clean.fillna("Unknown")
 
+    # Separate target
     y = df_clean[TARGET]
     X = df_clean.drop(columns=[TARGET])
 
-    # Encode features only
-    X = preprocess_data(X)
+    # Convert ALL categorical → numeric
+    X = pd.get_dummies(X)
 
     model_columns = X.columns.tolist()
 
+    # Train-test split
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, stratify=y, test_size=0.25, random_state=42
     )
 
-    # Apply SMOTE safely
+    # SMOTE (safe)
     try:
         smote = SMOTE(sampling_strategy=0.7, random_state=42)
         X_train, y_train = smote.fit_resample(X_train, y_train)
     except Exception as e:
         print("⚠️ SMOTE skipped:", e)
 
+    # Scale
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
+    # Model
     model = RandomForestClassifier(
         n_estimators=400,
         max_depth=15,
@@ -121,6 +107,7 @@ def train_model():
 
     model.fit(X_train, y_train)
 
+    # Evaluation
     probs = model.predict_proba(X_test)[:, 1]
     threshold = 0.65
     preds = (probs >= threshold).astype(int)
@@ -231,21 +218,17 @@ def predict():
 
     for col in model_columns:
         val = request.form.get(col)
+        try:
+            input_data[col] = float(val)
+        except:
+            input_data[col] = val  # keep string for get_dummies
 
-        if col in label_encoders:
-            try:
-                val = label_encoders[col].transform([str(val)])[0]
-            except:
-                val = label_encoders[col].transform([label_encoders[col].classes_[0]])[0]
-        else:
-            try:
-                val = float(val)
-            except:
-                val = 0
+    df_input = pd.DataFrame([input_data])
 
-        input_data[col] = val
+    # Convert to same structure
+    df_input = pd.get_dummies(df_input)
+    df_input = df_input.reindex(columns=model_columns, fill_value=0)
 
-    df_input = pd.DataFrame([input_data]).reindex(columns=model_columns, fill_value=0)
     scaled = scaler.transform(df_input)
 
     prob = model.predict_proba(scaled)[0][1]
